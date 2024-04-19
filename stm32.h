@@ -51,7 +51,6 @@ struct stm32 {
 	const serial_t		*serial;
 	struct port_interface	*port;
 	uint8_t			bl_version;
-	uint8_t			version;
 	uint8_t			option1, option2;
 	uint16_t		pid;
 	stm32_cmd_t		*cmd;

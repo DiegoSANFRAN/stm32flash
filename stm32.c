@@ -418,6 +418,7 @@ stm32_t *stm32_init(struct port_interface *port, const char init)
 	uint8_t len, val, buf[257];
 	stm32_t *stm;
 	int i, new_cmds;
+	uint8_t version;
 
 	stm      = calloc(sizeof(stm32_t), 1);
 	stm->cmd = malloc(sizeof(stm32_cmd_t));
@@ -446,7 +447,7 @@ stm32_t *stm32_init(struct port_interface *port, const char init)
 		port->read(port, &buf[2], 1);
 	}
 
-	stm->version = buf[0];
+	version = buf[0]; /* same as bl_version retrieved later */
 	stm->option1 = (port->flags & PORT_GVR_ETX) ? buf[1] : 0;
 	stm->option2 = (port->flags & PORT_GVR_ETX) ? buf[2] : 0;
 	if (stm32_get_ack(stm) != STM32_ERR_OK) {
@@ -458,7 +459,7 @@ stm32_t *stm32_init(struct port_interface *port, const char init)
 	len = STM32_CMD_GET_LENGTH;
 	if (port->cmd_get_reply)
 		for (i = 0; port->cmd_get_reply[i].length; i++)
-			if (stm->version == port->cmd_get_reply[i].version) {
+			if (version == port->cmd_get_reply[i].version) {
 				len = port->cmd_get_reply[i].length;
 				break;
 			}
@@ -519,6 +520,9 @@ stm32_t *stm32_init(struct port_interface *port, const char init)
 	}
 	if (new_cmds)
 		fprintf(stderr, ")\n");
+	if (stm->bl_version != version) {
+		fprintf(stderr, "Warning: Bootloader version mismatch: %02x vs %02x\n", stm->bl_version, version);
+	}
 	if (stm32_get_ack(stm) != STM32_ERR_OK) {
 		stm32_close(stm);
 		return NULL;
